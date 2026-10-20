@@ -182,3 +182,51 @@ describe('contextual logger', () => {
     expect(output).toContain('"token":"[REDACTED]"')
   })
 })
+
+describe('string interpolation', () => {
+  let sandbox
+
+  beforeEach(() => {
+    sandbox = Sinon.createSandbox()
+    sandbox.spy(process.stdout, 'write')
+  })
+
+  afterEach(() => {
+    sandbox.restore()
+  })
+
+  const loggedMessage = () => process.stdout.write.firstCall.args[0].split('info\x1B[39m: ')[1]
+
+  test('interpolates a string placeholder', () => {
+    Logger.info('test message %s', 'my string')
+    expect(loggedMessage()).toBe('test message my string\n')
+  })
+
+  test('interpolates multiple placeholders', () => {
+    Logger.info('%s and %s', 'one', 'two')
+    expect(loggedMessage()).toBe('one and two\n')
+  })
+
+  test('interpolates a number placeholder', () => {
+    Logger.info('number %d', 42)
+    expect(loggedMessage()).toBe('number 42\n')
+  })
+
+  test('interpolates via a child logger, keeping the context', () => {
+    const logger = Logger.child({ a: 1 })
+    logger.info('id: %s', 'abc')
+    expect(loggedMessage()).toBe(
+      'id: abc -\t' + stringify({ a: 1 }, null, config.jsonStringifySpacing) + '\n'
+    )
+  })
+
+  test('leaves a literal percent sign untouched', () => {
+    Logger.info('50% complete')
+    expect(loggedMessage()).toBe('50% complete\n')
+  })
+
+  test('leaves a placeholder without an argument untouched', () => {
+    Logger.info('no arg %s')
+    expect(loggedMessage()).toBe('no arg %s\n')
+  })
+})

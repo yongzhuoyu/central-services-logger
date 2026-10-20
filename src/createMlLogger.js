@@ -21,6 +21,7 @@
 
  * Mojaloop Foundation
  - Name Surname <name.surname@mojaloop.io>
+ - Yong Zhuo Yu <yongzhuoyu@gmail.com>
 
  * ModusBox
  - Lazola Lucas <lazola.lucas@modusbox.com>
@@ -86,6 +87,9 @@ const createMlLogger = () => {
     level,
     levels: allLevels,
     format: format.combine(
+      // splat() runs first so later formats and transports see the
+      // already-interpolated message (e.g. Logger.info('id: %s', id))
+      format.splat(),
       format.timestamp(),
       errorExpect()
     ),
